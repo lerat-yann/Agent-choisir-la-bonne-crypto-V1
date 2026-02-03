@@ -1,0 +1,23 @@
+.app { font-family: Arial, sans-serif; color: #111; background: #f7f7f7; min-height: 100vh; }
+.header { padding: 24px; background: #fff; border-bottom: 1px solid #e5e5e5; }
+.main { display: grid; gap: 16px; padding: 24px; max-width: 900px; margin: 0 auto; }
+.card { background: #fff; padding: 16px; border: 1px solid #e5e5e5; border-radius: 8px; }
+.field { display: grid; gap: 6px; margin: 12px 0; }
+.field.inline { display: flex; align-items: center; gap: 10px; }
+.form { display: grid; gap: 6px; }
+input, select { padding: 8px; border: 1px solid #ccc; border-radius: 6px; }
+.primary { padding: 10px 14px; border: none; border-radius: 6px; background: #111; color: #fff; cursor: pointer; }
+.primary:disabled { opacity: 0.6; cursor: not-allowed; }
+.placeholder { padding: 12px; background: #fafafa; border: 1px dashed #ddd; border-radius: 6px; }
+.error { color: #b00020; margin-top: 8px; }
+.warning { color: #a15c00; margin: 8px 0; }
+.note { color: #666; font-size: 0.9rem; }
+.report { white-space: pre-wrap; background: #fafafa; padding: 12px; border-radius: 6px; border: 1px solid #eee; }
+.suggestions { list-style: none; padding: 0; margin: 6px 0 0; border: 1px solid #e5e5e5; border-radius: 6px; max-height: 180px; overflow: auto; }
+.suggestions li { margin: 0; }
+.suggestions button { width: 100%; text-align: left; padding: 8px 10px; border: none; background: #fff; cursor: pointer; }
+.suggestions button:hover, .suggestions button.active { background: #f0f0f0; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; background: #111; color: #fff; border-radius: 999px; font-size: 0.85rem; }
+.chip-remove { background: transparent; border: none; color: #fff; font-size: 1rem; cursor: pointer; line-height: 1; padding: 0 2px; }
+.footer { padding: 16px 24px; color: #666; }

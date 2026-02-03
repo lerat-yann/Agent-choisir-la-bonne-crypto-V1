@@ -1,0 +1,13 @@
+# Testing Strategy
+- **Unit Tests:** Aucun obligatoire en MVP
+- **E2E Tests:** Aucun obligatoire en MVP
+- **Manual Checks:**
+  - Selection actifs (1-3) valide
+  - Niveau obligatoire
+  - Rapport genere avec sections
+  - Comparaison affichee si >= 2 actifs
+  - Fallback data-only si LLM indisponible
+  - Temps de generation <= 15s
+  - Disclaimer visible
+- **Pre-commit Hooks:** Aucun par defaut
+- **Verification Loop:** Check manuel apres chaque feature

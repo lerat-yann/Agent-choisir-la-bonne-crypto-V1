@@ -1,0 +1,7 @@
+{
+  "OBJECTIF": "analyse_long_terme",
+  "NIVEAU": "debutant",
+  "ASSETS": ["BTC"],
+  "PERIODE": "5a",
+  "INCLUDE": { "NEWS": false, "CHARTS": true, "COMPARE": true, "LLM_ADVISORY": false }
+}
