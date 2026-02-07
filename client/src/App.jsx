@@ -13,10 +13,10 @@ export default function App() {
   const [suggestError, setSuggestError] = useState("");
   const [activeIndex, setActiveIndex] = useState(-1);
   const [level, setLevel] = useState("debutant");
-  const [includeLlm, setIncludeLlm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [report, setReport] = useState(null);
+  const [activeTab, setActiveTab] = useState("intro");
 
   const canSubmit = selectedAssets.length >= 1 && selectedAssets.length <= 3 && level;
 
@@ -70,11 +70,12 @@ export default function App() {
           NEWS: false,
           CHARTS: true,
           COMPARE: true,
-          LLM_ADVISORY: includeLlm
+          LLM_ADVISORY: false
         }
       };
       const data = await requestReport(payload);
       setReport(data);
+      setActiveTab("intro");
     } catch (err) {
       setError(err.message || "Erreur inconnue.");
     } finally {
@@ -126,14 +127,29 @@ export default function App() {
   return (
     <div className="app">
       <header className="header">
-        <h1>CryptoSense</h1>
-        <p>Analyse long terme, claire et neutre. Aucun conseil financier.</p>
+        <div className="header-inner">
+          <div className="brand">
+            <span className="brand-mark" aria-hidden="true" />
+            <div>
+              <p className="eyebrow">CryptoSense</p>
+              <h1>Analyse long terme, claire et neutre</h1>
+              <p className="tagline">Rapports structurés, data-only, sans conseil financier.</p>
+            </div>
+          </div>
+          <div className="header-badges">
+            <span className="badge ghost">No advice</span>
+            <span className="badge ghost">Data-first</span>
+          </div>
+        </div>
       </header>
 
       <main className="main">
         <section className="card">
-          <h2>Selection</h2>
-          <p>Choisissez 1 a 3 actifs et un niveau.</p>
+          <div className="card-title">
+            <h2>Selection</h2>
+            <span className="badge">1–3 actifs</span>
+          </div>
+          <p className="muted">Choisissez vos actifs et un niveau pedagogique.</p>
           <form className="form" onSubmit={handleSubmit}>
             <div className="field">
               <label htmlFor="assets">Actifs (ex: BTC, ETH)</label>
@@ -146,7 +162,7 @@ export default function App() {
                 onKeyDown={handleKeyDown}
               />
               <small>Ajoutez 1 a 3 actifs. Entree pour valider.</small>
-              {suggestLoading && <small>Recherche...</small>}
+              {suggestLoading && <small className="hint">Recherche...</small>}
               {suggestError && <small className="error">{suggestError}</small>}
               {assetNotice && <small className="warning">{assetNotice}</small>}
               {suggestions.length > 0 && (
@@ -196,39 +212,33 @@ export default function App() {
                 ))}
               </select>
             </div>
-            <div className="field inline">
-              <input
-                id="llm"
-                type="checkbox"
-                checked={includeLlm}
-                onChange={(event) => setIncludeLlm(event.target.checked)}
-              />
-              <label htmlFor="llm">Inclure synthese IA (Gemini)</label>
-            </div>
             <button className="primary" disabled={!canSubmit || loading}>
               {loading ? "Generation..." : "Lancer l'analyse"}
             </button>
           </form>
-          {error && <p className="error">{error}</p>}
+          {error && <p className="error alert">Erreur: {error}</p>}
         </section>
 
-        <section className="card">
-          <h2>Rapport</h2>
-          {!report && !loading && (
-            <p>Le rapport s'affichera ici apres generation.</p>
-          )}
+        <section className="card report-card">
+          <div className="card-title">
+            <h2>Rapport</h2>
+            {report?.meta?.fallback && <span className="badge warning">DATA-ONLY</span>}
+            {loading && <span className="badge info">Loading</span>}
+          </div>
+          {!report && !loading && <p className="muted">Le rapport s'affichera ici apres generation.</p>}
           {loading && <div className="placeholder">Generation en cours...</div>}
           {report && (
             <>
               {report.meta?.fallback && (
-                <p className="warning">Fallback data-only actif (LLM indisponible).</p>
+                <p className="warning subtle">Fallback data-only actif (LLM indisponible).</p>
               )}
-              <pre className="report">{report.reportMarkdown}</pre>
-              {report.sections?.comparison && assets.length >= 2 ? (
-                <p className="note">Section comparaison incluse.</p>
-              ) : (
-                <p className="note">Comparaison masquee (moins de 2 actifs).</p>
-              )}
+              <ReportTabs
+                reportMarkdown={report.reportMarkdown}
+                meta={report.meta}
+                hasComparison={Boolean(report.sections?.comparison && selectedAssets.length >= 2)}
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+              />
             </>
           )}
         </section>
@@ -239,4 +249,113 @@ export default function App() {
       </footer>
     </div>
   );
+}
+
+function ReportTabs({ reportMarkdown, meta, hasComparison, activeTab, onTabChange }) {
+  const sections = useMemo(() => splitMarkdownSections(reportMarkdown), [reportMarkdown]);
+  const intro = buildIntro(sections, meta);
+
+  const tabs = [
+    { id: "intro", label: "CryptoSense", content: intro },
+    { id: "market", label: "Marche", content: sections.market },
+    { id: "fundamentals", label: "Fondamentaux", content: sections.fundamentals },
+    { id: "risks", label: "Risques", content: sections.risks },
+    { id: "comparison", label: "Comparaison", content: hasComparison ? sections.comparison : "" }
+  ].filter((tab) => tab.content && tab.content.trim().length > 0);
+
+  useEffect(() => {
+    if (!tabs.find((tab) => tab.id === activeTab)) {
+      onTabChange(tabs[0]?.id || "intro");
+    }
+  }, [activeTab, onTabChange, tabs]);
+
+  return (
+    <div className="report-tabs">
+      <div className="tablist" role="tablist" aria-label="Sections du rapport">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            role="tab"
+            aria-selected={activeTab === tab.id}
+            className={activeTab === tab.id ? "tab active" : "tab"}
+            onClick={() => onTabChange(tab.id)}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+      <div className="tab-panel" role="tabpanel">
+        <pre className="report">{tabs.find((tab) => tab.id === activeTab)?.content || ""}</pre>
+      </div>
+    </div>
+  );
+}
+
+function splitMarkdownSections(markdown) {
+  const lines = markdown.split("\n");
+  const metaLine = lines.find((line) => line.startsWith("*Genere le:"));
+  const disclaimerLine = lines.find((line) => line.startsWith("> "));
+
+  const sections = {
+    intro: "",
+    market: "",
+    fundamentals: "",
+    risks: "",
+    comparison: "",
+    metaLine: metaLine || "",
+    disclaimerLine: disclaimerLine || ""
+  };
+
+  let current = "intro";
+  const buffer = {
+    intro: [],
+    market: [],
+    fundamentals: [],
+    risks: [],
+    comparison: []
+  };
+
+  lines.forEach((line) => {
+    if (line.startsWith("## ")) {
+      const title = line.slice(3).trim().toLowerCase();
+      if (title.startsWith("marche")) current = "market";
+      else if (title.startsWith("fondamentaux")) current = "fundamentals";
+      else if (title.startsWith("risques")) current = "risks";
+      else if (title.startsWith("comparaison")) current = "comparison";
+      else current = "intro";
+      buffer[current].push(line);
+      return;
+    }
+    buffer[current].push(line);
+  });
+
+  sections.intro = buffer.intro.join("\n").trim();
+  sections.market = buffer.market.join("\n").trim();
+  sections.fundamentals = buffer.fundamentals.join("\n").trim();
+  sections.risks = buffer.risks.join("\n").trim();
+  sections.comparison = buffer.comparison.join("\n").trim();
+
+  return sections;
+}
+
+function buildIntro(sections, meta) {
+  const lines = [];
+  lines.push("## CryptoSense");
+  if (sections.disclaimerLine) {
+    lines.push(sections.disclaimerLine);
+    lines.push("");
+  }
+  lines.push("Rapport informatif uniquement. Aucune recommandation.");
+  lines.push("");
+  lines.push("### Metadonnees");
+  if (meta?.generatedAt) {
+    lines.push(`- Date: ${meta.generatedAt}`);
+  } else if (sections.metaLine) {
+    lines.push(`- ${sections.metaLine.replace(/\*/g, "")}`);
+  }
+  if (meta?.sources?.length) {
+    lines.push(`- Sources: ${meta.sources.join(", ")}`);
+  }
+  return lines.join("\n").trim();
 }
